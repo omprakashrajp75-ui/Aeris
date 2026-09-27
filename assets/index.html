@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#4F46E5" />
+  <title>Aeris</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ===================== APP BAR ===================== -->
+  <header class="appbar">
+    <div class="wordmark">
+      <span class="logo" aria-hidden="true"></span>
+      <span class="wordmark-text">Aeris</span>
+    </div>
+    <div class="conn" id="conn">
+      <span class="conn-dot" aria-hidden="true"></span>
+      <span class="conn-time" id="conn-time">--:--</span>
+    </div>
+  </header>
+
+  <!-- ===================== SCREEN ===================== -->
+  <main class="screen" id="screen" aria-live="polite"></main>
+
+  <!-- ===================== TAB BAR ===================== -->
+  <nav class="tabbar" id="tabbar" aria-label="Sections">
+    <button class="tab" type="button" data-tab="home" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 11.2 12 4l9 7.2" />
+        <path d="M5.8 9.8V20h12.4V9.8" />
+      </svg>
+      <span>Home</span>
+    </button>
+    <button class="tab" type="button" data-tab="trends">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 19V5" /><path d="M4 19h16" />
+        <path d="M7.5 15.5 11 11l3 3 4.5-6.5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>Trends</span>
+    </button>
+    <button class="tab" type="button" data-tab="baseline">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 7.2v5l3 1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>Baseline</span>
+    </button>
+    <button class="tab" type="button" data-tab="alerts">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4.5 18h15z" stroke-linejoin="round" />
+        <path d="M10 20.5a2 2 0 0 0 4 0" stroke-linecap="round" />
+      </svg>
+      <span>Alerts</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- =====================================================================
+     Panel templates. Only the active tab's panel is cloned into #screen;
+     the others never exist in the document.
+     ===================================================================== -->
+
+<template id="tpl-home">
+  <section class="panel">
+
+    <div class="hero" id="hero">
+      <div class="hero-top">
+        <span class="eyebrow">Current strain</span>
+        <span class="chip" id="hero-source" hidden></span>
+      </div>
+      <div class="hero-figure" id="strain-value">—</div>
+      <div class="hero-band">
+        <span class="dot" id="band-dot" aria-hidden="true"></span>
+        <span id="band-label">No data yet</span>
+      </div>
+    </div>
+
+    <div class="note" id="calib-home" hidden>
+      <span class="note-icon" aria-hidden="true">!</span>
+      <span class="note-text" data-calib-text></span>
+    </div>
+
+    <div class="section-label">Vitals</div>
+
+    <div class="grid-2">
+      <div class="card stat" id="tile-hr">
+        <div class="stat-label">Heart rate</div>
+        <div class="stat-value"><span data-v>—</span><i>bpm</i></div>
+        <div class="stat-note" data-note></div>
+      </div>
+      <div class="card stat" id="tile-spo2">
+        <div class="stat-label">Blood oxygen</div>
+        <div class="stat-value"><span data-v>—</span><i>%</i></div>
+        <div class="stat-note" data-note></div>
+      </div>
+      <div class="card stat" id="tile-skin">
+        <div class="stat-label">Skin temp</div>
+        <div class="stat-value"><span data-v>—</span><i>&deg;C</i></div>
+        <div class="stat-note" data-note></div>
+      </div>
+      <div class="card stat" id="tile-motion">
+        <div class="stat-label">Motion</div>
+        <div class="stat-value"><span data-v>—</span></div>
+        <div class="stat-note" data-note></div>
+      </div>
+    </div>
+
+    <div class="section-label">Environment</div>
+
+    <div class="card row-card">
+      <div class="row" id="tile-amb">
+        <span class="row-label">Ambient temperature</span>
+        <span class="row-value"><span data-v>—</span><i>&deg;C</i></span>
+      </div>
+      <div class="divider"></div>
+      <div class="row" id="tile-rh">
+        <span class="row-label">Relative humidity</span>
+        <span class="row-value"><span data-v>—</span><i>%</i></span>
+      </div>
+    </div>
+
+    <div class="empty" id="home-empty" hidden>
+      <div class="empty-art" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 5 12 2.5-6h4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Waiting for the sensor</h3>
+      <p id="home-empty-text">The board hasn't sent a reading yet.</p>
+    </div>
+
+  </section>
+</template>
+
+<template id="tpl-trends">
+  <section class="panel">
+    <div class="section-label">Strain &middot; last 8 hours</div>
+
+    <div class="note" id="calib-trends" hidden>
+      <span class="note-icon" aria-hidden="true">!</span>
+      <span class="note-text" data-calib-text></span>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-head">
+        <span class="chart-title" id="chart-title">Strain</span>
+        <span class="chip" id="chart-source" hidden></span>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart" role="img" aria-label="Strain over the last 8 hours"></svg>
+        <div class="tooltip" id="tooltip" hidden></div>
+      </div>
+    </div>
+
+    <div class="empty" id="chart-empty" hidden>
+      <div class="empty-art" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7.5 15.5 11 11l3 3 4.5-6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>No strain recorded yet</h3>
+      <p>Strain is logged once the wearable has a valid pulse and a resting
+         reference. Sit still for a moment to set the reference, then check back.</p>
+    </div>
+
+    <details class="table-view" id="chart-table-wrap" hidden>
+      <summary>Show data table</summary>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Time</th><th>Strain</th><th>Band</th></tr></thead>
+          <tbody id="chart-table"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+</template>
+
+<template id="tpl-baseline">
+  <section class="panel">
+    <div class="section-label">Resting heart rate</div>
+
+    <div class="card ring-card">
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-track" cx="60" cy="60" r="52" />
+          <circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="52" />
+        </svg>
+        <div class="ring-centre">
+          <span class="ring-count" id="ring-count">0</span>
+          <span class="ring-total" id="ring-total">of 300</span>
+        </div>
+      </div>
+      <div class="ring-status">
+        <span class="pill" id="base-pill">Learning</span>
+        <p id="base-explain">
+          Aeris learns your resting heart rate only while you are completely
+          still. Sit or lie down without moving and the counter will climb.
+        </p>
+      </div>
+    </div>
+
+    <div class="section-label">Learned values</div>
+
+    <div class="card row-card">
+      <div class="row" id="tile-bmean">
+        <span class="row-label">Resting HR</span>
+        <span class="row-value"><span data-v>—</span><i>bpm</i></span>
+      </div>
+      <div class="divider"></div>
+      <div class="row" id="tile-bsd">
+        <span class="row-label">Variation (SD)</span>
+        <span class="row-value"><span data-v>—</span><i>bpm</i></span>
+      </div>
+      <div class="divider"></div>
+      <div class="row" id="tile-bstate">
+        <span class="row-label">Deviation alerts</span>
+        <span class="row-value"><span data-v>—</span></span>
+      </div>
+    </div>
+
+    <div class="empty" id="base-empty" hidden>
+      <div class="empty-art" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.2v5l3 1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>Nothing learned yet</h3>
+      <p>No stillness samples have been recorded. Keep the wearable on and stay
+         still — Aeris needs 300 quiet seconds before it can flag an unusual
+         resting heart rate.</p>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-alerts">
+  <section class="panel">
+    <div class="section-label">Today</div>
+    <ul class="alert-list" id="alerts-list"></ul>
+
+    <div class="empty" id="alerts-empty" hidden>
+      <div class="empty-art" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4.5 18h15z" stroke-linejoin="round"/><path d="M10 20.5a2 2 0 0 0 4 0" stroke-linecap="round"/></svg>
+      </div>
+      <h3>No alerts today</h3>
+      <p>Nothing has crossed an alert threshold since midnight. Alerts raised by
+         the wearable will appear here with how long they took to acknowledge.</p>
+    </div>
+  </section>
+</template>
+
+<!-- Vendored locally on purpose: the app must render with no internet
+     connection at all. Do not swap this for a CDN. -->
+<script src="libs/socket.io.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

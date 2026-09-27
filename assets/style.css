@@ -1,0 +1,514 @@
+/* ===========================================================================
+   Aeris companion app.
+
+   Colour contract:
+   - ONE brand colour (indigo) for chrome, accents and the active tab.
+   - The five band colours are a reserved semantic ramp. Nothing decorative
+     uses them; they appear only on band dots, the strain hero tint, and
+     alert rows. Neutral ink is deliberately COOL blue-grey so it can never be
+     mistaken for the warm NONE grey.
+   - System font stack only. No webfonts, no network requests.
+   ========================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* Brand - indigo. Distinct in hue from every band colour. */
+  --brand:        #4F46E5;
+  --brand-ink:    #3D35C7;   /* brand text on light surfaces */
+  --brand-soft:   #EEEDFC;   /* brand wash */
+
+  /* Reserved semantic ramp - never used decoratively. */
+  --band-NONE:      #898781;
+  --band-LOW:       #0CA30C;
+  --band-MODERATE:  #FAB219;
+  --band-HIGH:      #EC835A;
+  --band-VERY_HIGH: #D03B3B;
+
+  /* Neutrals (cool, to stay clear of the warm NONE grey). */
+  --backdrop: #E7E9F0;
+  --app-bg:   #F5F6FA;
+  --card:     #FFFFFF;
+  --ink:      #14161C;   /* 16.5:1 on card */
+  --ink-2:    #454B57;   /*  8.6:1 on card */
+  --ink-3:    #5D6472;   /*  6.2:1 on card - AA for all sizes */
+  --line:     #DFE2EA;
+  --track:    #E6E9F0;
+
+  --shadow-card: 0 1px 2px rgba(20, 22, 28, .06), 0 4px 14px rgba(20, 22, 28, .07);
+  --shadow-bar:  0 -2px 14px rgba(20, 22, 28, .08);
+  --radius:      16px;
+  --radius-sm:   12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --brand:      #818CF8;
+    --brand-ink:  #A5AEFB;
+    --brand-soft: #1D2030;
+
+    --backdrop: #06070A;
+    --app-bg:   #0E1014;
+    --card:     #171A21;
+    --ink:      #F3F5F9;
+    --ink-2:    #C7CDD8;   /* 11:1 on card */
+    --ink-3:    #9AA2B1;   /*  6.4:1 on card */
+    --line:     #262B35;
+    --track:    #232833;
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .5), 0 6px 18px rgba(0, 0, 0, .45);
+    --shadow-bar:  0 -2px 16px rgba(0, 0, 0, .55);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--backdrop);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  justify-content: center;
+}
+
+/* ============================ APP FRAME ============================ */
+
+.phone {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-bg);
+  overflow: hidden;
+}
+
+/* On anything wider than a phone, float the frame like a device. */
+@media (min-width: 480px) {
+  body { align-items: center; padding: 24px 0; }
+  .phone {
+    height: min(940px, calc(100dvh - 48px));
+    border-radius: 30px;
+    box-shadow: 0 10px 50px rgba(10, 12, 20, .22), 0 2px 8px rgba(10, 12, 20, .12);
+  }
+}
+
+/* ============================ APP BAR ============================ */
+
+.appbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) 18px 12px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.wordmark { display: flex; align-items: center; gap: 9px; }
+
+.logo {
+  width: 22px; height: 22px;
+  border-radius: 7px;
+  background: var(--brand);
+  position: relative;
+  flex: 0 0 auto;
+}
+.logo::after {
+  content: "";
+  position: absolute; inset: 6px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  border-bottom-color: transparent;
+  transform: rotate(-38deg);
+}
+
+.wordmark-text {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.conn {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+.conn-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ink-3);
+  flex: 0 0 auto;
+}
+/* Connection state uses brand + neutral, never a band colour. */
+.conn.live .conn-dot { background: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+.conn.down .conn-dot { background: transparent; border: 2px solid var(--ink-3); }
+.conn.down .conn-time { color: var(--ink-3); }
+
+/* ============================ SCREEN ============================ */
+
+.screen {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 24px;
+}
+
+.panel { display: flex; flex-direction: column; gap: 14px; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 4px 2px -4px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.divider { height: 1px; background: var(--line); }
+
+/* ============================ STRAIN HERO ============================ */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px 20px;
+  --band-color: var(--band-NONE);
+}
+/* The only large coloured surface in the app: a soft tint pulled from the
+   current band colour. */
+.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(130% 100% at 12% 0%, var(--band-color) 0%, transparent 68%);
+  opacity: .20;
+  pointer-events: none;
+}
+@media (prefers-color-scheme: dark) { .hero::before { opacity: .26; } }
+
+.hero > * { position: relative; }
+
+.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+
+.eyebrow {
+  font-size: 11px; font-weight: 650; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+.hero-figure {
+  font-size: 66px;
+  font-weight: 680;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  margin: 6px 0 2px;
+  color: var(--ink);
+}
+.hero.stale .hero-figure { color: var(--ink-3); }
+
+.hero-band {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 15px; font-weight: 600; color: var(--ink-2);
+}
+
+.dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--band-NONE);
+  flex: 0 0 auto;
+}
+.band-NONE      { background: var(--band-NONE); }
+.band-LOW       { background: var(--band-LOW); }
+.band-MODERATE  { background: var(--band-MODERATE); }
+.band-HIGH      { background: var(--band-HIGH); }
+.band-VERY_HIGH { background: var(--band-VERY_HIGH); }
+
+.chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  white-space: nowrap;
+}
+
+/* ============================ NOTE / BANNER ============================ */
+
+.note {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  border-left: 3px solid var(--brand);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.note-icon {
+  flex: 0 0 auto;
+  width: 17px; height: 17px; margin-top: 1px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--brand);
+  color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
+
+/* ============================ STAT CARDS ============================ */
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.stat { padding: 14px 15px 13px; }
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--ink-3);
+}
+.stat-value {
+  margin-top: 5px;
+  display: flex; align-items: baseline; gap: 4px;
+  font-size: 27px; font-weight: 650; letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.stat-value i { font-style: normal; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.stat-note { margin-top: 2px; font-size: 11.5px; color: var(--ink-3); min-height: 15px; }
+
+/* A value whose *_valid flag is false is never shown as if it were live. */
+.stat.stale .stat-value,
+.stat.stale .stat-value i { color: var(--ink-3); }
+
+.row-card { padding: 4px 16px; }
+.row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px 0;
+}
+.row-label { font-size: 14px; color: var(--ink-2); }
+.row-value {
+  display: flex; align-items: baseline; gap: 4px;
+  font-size: 17px; font-weight: 650; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.row-value i { font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
+.row.stale .row-value, .row.stale .row-value i { color: var(--ink-3); font-weight: 600; }
+
+/* ============================ CHART ============================ */
+
+.chart-card { padding: 14px 12px 10px; }
+.chart-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 0 4px 8px;
+}
+.chart-title { font-size: 13px; font-weight: 650; color: var(--ink-2); }
+
+.chart-wrap { position: relative; }
+#chart { width: 100%; height: 210px; display: block; touch-action: pan-y; }
+
+.grid-line      { stroke: var(--line); stroke-width: 1; }
+.threshold-line { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
+.axis-line      { stroke: var(--line); stroke-width: 1; }
+.tick-text      { fill: var(--ink-3); font-size: 9px; font-variant-numeric: tabular-nums;
+                  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.threshold-text { fill: var(--ink-3); font-size: 8px; letter-spacing: .03em;
+                  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.series-line    { fill: none; stroke: var(--brand); stroke-width: 2;
+                  stroke-linejoin: round; stroke-linecap: round; }
+.series-area    { fill: var(--brand); opacity: .09; }
+.crosshair      { stroke: var(--ink-3); stroke-width: 1; }
+.hover-dot      { fill: var(--brand); stroke: var(--card); stroke-width: 2.5; }
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+  white-space: nowrap;
+  z-index: 4;
+}
+.tooltip .tt-time {
+  display: block; color: var(--ink-3); font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.tooltip .tt-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+.tooltip strong { font-variant-numeric: tabular-nums; }
+
+/* ============================ TABLE VIEW ============================ */
+
+.table-view summary {
+  cursor: pointer; font-size: 12.5px; color: var(--brand-ink);
+  font-weight: 600; padding: 4px 2px;
+}
+.table-scroll {
+  max-height: 260px; overflow: auto; margin-top: 8px;
+  background: var(--card); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card); padding: 4px 14px 10px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th {
+  position: sticky; top: 0; background: var(--card);
+  text-align: left; font-size: 10.5px; font-weight: 650;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3);
+  padding: 8px 8px 6px 0; border-bottom: 1px solid var(--line);
+}
+td {
+  padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line);
+  color: var(--ink-2); font-variant-numeric: tabular-nums;
+}
+
+/* ============================ BASELINE RING ============================ */
+
+.ring-card { padding: 20px 18px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+.ring-wrap { position: relative; width: 168px; height: 168px; }
+.ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.ring-track { stroke: var(--track); }
+.ring-fill  { stroke: var(--brand); transition: stroke-dashoffset .5s ease; }
+
+.ring-centre {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+}
+.ring-count {
+  font-size: 42px; font-weight: 680; letter-spacing: -0.03em;
+  color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1;
+}
+.ring-total { font-size: 12px; color: var(--ink-3); }
+
+.ring-status { text-align: center; }
+.ring-status p { margin: 10px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+.pill {
+  display: inline-block;
+  font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--brand-soft); color: var(--brand-ink);
+}
+.pill.ready { background: var(--brand); color: #fff; }
+
+/* ============================ ALERTS ============================ */
+
+.alert-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.alert-item {
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  padding: 13px 15px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.alert-head { display: flex; align-items: center; gap: 9px; }
+.alert-band { font-size: 14.5px; font-weight: 650; color: var(--ink); }
+.alert-time {
+  margin-left: auto; font-size: 12.5px; color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.alert-meta {
+  display: flex; flex-wrap: wrap; gap: 6px 14px;
+  font-size: 12px; color: var(--ink-3);
+}
+.alert-meta b { font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.alert-item.is-false .alert-band,
+.alert-item.is-false .alert-meta b { color: var(--ink-3); text-decoration: line-through; }
+
+.btn {
+  font: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 8px 14px; border-radius: 10px;
+  border: 1px solid var(--line); background: transparent;
+  color: var(--brand-ink); cursor: pointer;
+  align-self: flex-start;
+  min-height: 36px;
+}
+.btn:active { background: var(--brand-soft); }
+.btn[disabled] { color: var(--ink-3); cursor: default; background: transparent; }
+
+/* ============================ EMPTY STATES ============================ */
+
+.empty {
+  text-align: center;
+  padding: 34px 26px 30px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+.empty-art {
+  width: 54px; height: 54px; margin: 0 auto 14px;
+  border-radius: 16px;
+  background: var(--brand-soft);
+  display: grid; place-items: center;
+}
+.empty-art svg { width: 26px; height: 26px; fill: none; stroke: var(--brand); stroke-width: 1.7; }
+.empty h3 { margin: 0 0 6px; font-size: 16px; font-weight: 650; color: var(--ink); }
+.empty p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+
+/* ============================ TAB BAR ============================ */
+
+.tabbar {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  box-shadow: var(--shadow-bar);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab {
+  appearance: none;
+  border: 0; background: transparent;
+  font: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 9px 4px 10px;
+  color: var(--ink-3);
+  cursor: pointer;
+  position: relative;
+  min-height: 56px;
+}
+.tab svg {
+  width: 23px; height: 23px;
+  fill: none; stroke: currentColor; stroke-width: 1.7;
+}
+.tab span { font-size: 10.5px; font-weight: 600; letter-spacing: .01em; }
+
+.tab[aria-current="page"] { color: var(--brand); }
+.tab[aria-current="page"]::before {
+  content: "";
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 26px; height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--brand);
+}
+.tab[aria-current="page"] svg { stroke-width: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

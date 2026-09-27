@@ -1,0 +1,11 @@
+profiles:
+  default:
+    fqbn: 
+    platforms:
+      - platform: arduino:zephyr
+    libraries:
+      - SparkFun MAX3010x Pulse and Proximity Sensor Library (1.1.2)
+      - dependency: Adafruit BusIO (1.17.4)
+      - dependency: Adafruit Unified Sensor (1.1.15)
+
+default_profile: default

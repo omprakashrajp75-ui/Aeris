@@ -1,0 +1,6 @@
+name: AERIS
+description: Offline-first health and environmental monitoring on the Arduino UNO Q. Team THIRAN — Smart India Hackathon 2026, problem statement SIH26181 ("A
+ports: []
+bricks:
+- arduino:web_ui: {}
+icon: 👤
